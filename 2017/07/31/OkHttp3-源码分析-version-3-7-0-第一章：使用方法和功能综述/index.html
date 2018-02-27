@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="OkHttp," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.1" />
+
+
+
+
+
+
+<meta name="description" content="OKHTTP提供了一套易使用，功能明确，耦合性低的请求接口，我们首先通过以下几段代码来了解使用方法和其中的设计思路，然后通过对OKHTTP对外提供的所有功能类讲解来了解OKHTTP的使用">
+<meta name="keywords" content="OkHttp">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OkHttp3 源码分析(version: 3.7.0) - 第一章：使用方法和功能综述">
+<meta property="og:url" content="http://yoursite.com/2017/07/31/OkHttp3-源码分析-version-3-7-0-第一章：使用方法和功能综述/index.html">
+<meta property="og:site_name" content="Cat&#39;s 小窝">
+<meta property="og:description" content="OKHTTP提供了一套易使用，功能明确，耦合性低的请求接口，我们首先通过以下几段代码来了解使用方法和其中的设计思路，然后通过对OKHTTP对外提供的所有功能类讲解来了解OKHTTP的使用">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/images/OKHTTP层级关系图.png">
+<meta property="og:image" content="http://yoursite.com/images/Dispatcher流程图.png">
+<meta property="og:image" content="http://yoursite.com/images/OkHttp连接池清理流程.png">
+<meta property="og:updated_time" content="2018-02-27T07:32:37.826Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OkHttp3 源码分析(version: 3.7.0) - 第一章：使用方法和功能综述">
+<meta name="twitter:description" content="OKHTTP提供了一套易使用，功能明确，耦合性低的请求接口，我们首先通过以下几段代码来了解使用方法和其中的设计思路，然后通过对OKHTTP对外提供的所有功能类讲解来了解OKHTTP的使用">
+<meta name="twitter:image" content="http://yoursite.com/images/OKHTTP层级关系图.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/07/31/OkHttp3-源码分析-version-3-7-0-第一章：使用方法和功能综述/"/>
+
+
+
+
+
+  <title>OkHttp3 源码分析(version: 3.7.0) - 第一章：使用方法和功能综述 | Cat's 小窝</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Cat's 小窝</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/07/31/OkHttp3-源码分析-version-3-7-0-第一章：使用方法和功能综述/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="G33kC4t">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Cat's 小窝">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">OkHttp3 源码分析(version: 3.7.0) - 第一章：使用方法和功能综述</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-07-31T11:17:46+08:00">
+                2017-07-31
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>OKHTTP提供了一套易使用，功能明确，耦合性低的请求接口，我们首先通过以下几段代码来了解使用方法和其中的设计思路，然后通过对OKHTTP对外提供的所有功能类讲解来了解OKHTTP的使用</strong></p>
+<a id="more"></a>
+<h2 id="基本请求"><a href="#基本请求" class="headerlink" title="基本请求"></a>基本请求</h2><h3 id="GET-请求实例"><a href="#GET-请求实例" class="headerlink" title="GET 请求实例"></a>GET 请求实例</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">demoOkHttpGet</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    Request request = <span class="keyword">new</span> Request</span><br><span class="line">            .Builder()</span><br><span class="line">            .addHeader(<span class="string">"X-AC"</span>, <span class="string">"XXX"</span>)</span><br><span class="line">            .url(<span class="string">"http://www.baidu.com/"</span>)</span><br><span class="line">            .get()</span><br><span class="line">            .build();</span><br><span class="line"></span><br><span class="line">    OkHttpClient okc = <span class="keyword">new</span> OkHttpClient</span><br><span class="line">            .Builder()</span><br><span class="line">            .connectionPool(<span class="keyword">new</span> ConnectionPool(<span class="number">5</span>, <span class="number">5</span>, TimeUnit.MINUTES))</span><br><span class="line">            .addNetworkInterceptor(<span class="keyword">new</span> Interceptor() &#123;</span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> Response <span class="title">intercept</span><span class="params">(Chain chain)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">                    <span class="keyword">return</span> chain.proceed(chain.request());</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;)</span><br><span class="line">            .build();</span><br><span class="line"></span><br><span class="line">    Call call = okc</span><br><span class="line">            .newCall(request);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        Response response = call.execute();</span><br><span class="line">        <span class="keyword">int</span> code = response.code();</span><br><span class="line">        ResponseBody body = response.body();</span><br><span class="line">        Source source = body.source();</span><br><span class="line">        <span class="comment">// source output</span></span><br><span class="line">        source.close();</span><br><span class="line">    &#125; <span class="keyword">catch</span> (IOException ignored) &#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="综述"><a href="#综述" class="headerlink" title="综述"></a>综述</h4><p>一个基本的OkHttp请求分为Request - 请求体封装，OkHttpClient - 发送器参数封装，Call - 发送器接口和Response - 响应体封装。我们依次说明每个部分的功能。</p>
+<h4 id="Request部分"><a href="#Request部分" class="headerlink" title="Request部分"></a>Request部分</h4><p> Request类封装了HTTP协议中的请求体信息。其中有URL，请求类型（GET，POST），域名（HOSTNAME）等，还有其他标准或自定义的HEADER协议和Body。Request提供了方法去设置请求的Header信息，如果需要设置请求的请求体（REQUEST BODY）或设置上传文件需要通过RequestBody。</p>
+<h4 id="OkHttpClient部分"><a href="#OkHttpClient部分" class="headerlink" title="OkHttpClient部分"></a>OkHttpClient部分</h4><p>OkHttpClient类封装了完成一个完整请求所需的所有参数，其中包括：</p>
+<ol>
+<li>OkHttp任务调度相关参数 - 线程队列，连接池等</li>
+<li>HTTP协议中一些可选功能的实现 - KEPPALIVE缓存，SSL验证等</li>
+<li>网络层相关参数 - ScocketFactory，DNS解析代理，Proxy网络代理等<br>以上各个参数功能会在下一部分中介绍</li>
+</ol>
+<h4 id="Call部分"><a href="#Call部分" class="headerlink" title="Call部分"></a>Call部分</h4><p>Call接口封装了一整套HTTP请求的发送，接收和调度逻辑，是整个OkHttp组件的功能核心。其中包括对请求的：</p>
+<ol>
+<li>前置处理（前置拦截器）</li>
+<li>与服务器的连接</li>
+<li>发送 / 接收</li>
+<li>HTTP协议解析 - 生成 Response</li>
+<li>对响应的在处理（后置拦截器）</li>
+<li>一些HTTP协议相关动作的执行（GZIP解压，KEEPLIVE缓存，301/302重定向等）</li>
+</ol>
+<h4 id="Response部分"><a href="#Response部分" class="headerlink" title="Response部分"></a>Response部分</h4><p>Response类封装了HTTP协议中响应体的信息。参数有请求返回码，返回的Header（例如ContentLength）等，同时使用.body()函数返回请求的body,请求的bdoy体信息通过ResponseBody来封装</p>
+<h4 id="ResponseBody部分"><a href="#ResponseBody部分" class="headerlink" title="ResponseBody部分"></a>ResponseBody部分</h4><p>ResponseBody类主要封装了响应结果的数据体（body），提供了对body的一系列读取方法。</p>
+<h3 id="POST-请求实例"><a href="#POST-请求实例" class="headerlink" title="POST 请求实例"></a>POST 请求实例</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">demoOkHttpPost</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    RequestBody requestBody = <span class="keyword">new</span> MultipartBody</span><br><span class="line">            .Builder()</span><br><span class="line">            .addFormDataPart(<span class="string">"hashCode"</span>, <span class="string">"xxx"</span>)</span><br><span class="line">            .build();</span><br><span class="line"></span><br><span class="line">    Request request = <span class="keyword">new</span> Request</span><br><span class="line">            .Builder()</span><br><span class="line">            .url(<span class="string">"https://www.up.file.com"</span>)</span><br><span class="line">            .post(requestBody)</span><br><span class="line">            .build();</span><br><span class="line"></span><br><span class="line">    OkHttpClient okc = <span class="keyword">new</span> OkHttpClient</span><br><span class="line">            .Builder()</span><br><span class="line">            .connectionPool(<span class="keyword">new</span> ConnectionPool(<span class="number">5</span>, <span class="number">5</span>, TimeUnit.MINUTES))</span><br><span class="line">            .addNetworkInterceptor(<span class="keyword">new</span> Interceptor() &#123;</span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> Response <span class="title">intercept</span><span class="params">(Chain chain)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">                    <span class="keyword">return</span> chain.proceed(chain.request());</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;)</span><br><span class="line">            .hostnameVerifier(<span class="keyword">new</span> HostnameVerifier() &#123;</span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">verify</span><span class="params">(String hostname, SSLSession session)</span> </span>&#123;</span><br><span class="line">                    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;)</span><br><span class="line">            .build();</span><br><span class="line"></span><br><span class="line">    Call call = okc</span><br><span class="line">            .newCall(request);</span><br><span class="line"></span><br><span class="line">    call.enqueue(<span class="keyword">new</span> Callback() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onFailure</span><span class="params">(Call call, IOException e)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onResponse</span><span class="params">(Call call, Response response)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">            <span class="keyword">int</span> code = response.code();</span><br><span class="line">            ResponseBody body = response.body();</span><br><span class="line">            Source source = body.source();</span><br><span class="line">            <span class="comment">// source output</span></span><br><span class="line">            source.close();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="RequestBody部分"><a href="#RequestBody部分" class="headerlink" title="RequestBody部分"></a>RequestBody部分</h4><p>若需要<a href="#request_response4">向服务器提交数据</a>（文件/表单/JSON），需要填写在在Request的Body部分，这一部分规则OKHTTP提供了RequestBody类来实现。OKHTTP根据HTTP标准协议实现了FormBody和MultipartBody.<br>FormBody协议主要实现了”application/x-www-form-urlencoded” （原生表单提交），在Body中数据以键值对形式存在，每个键值对以&amp;分割（其实就是一版请求时?后面的参数）<br>MultipartBody（<a href="http://www.ietf.org/rfc/rfc2387.txt" target="_blank" rel="noopener">rfc2387</a>）实现了通过自定义的方式提交数据，可以通过修改其参数使用不同的方式提交数据。<br>我们还可以通过继承RequestBody来实现自定义类型的数据提交，或者二次修改Body。</p>
+<p>例如VV音乐中的上传文件代码<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">RequestBodyUpload</span> <span class="keyword">extends</span> <span class="title">RequestBody</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> BYTE_SIZE = <span class="number">512</span> * <span class="number">1024</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Logger _log = Logger.createLogger(getClass());</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> AbstractTransferInfomation infomation;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> ByteBuffer byteBuffer;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">byte</span>[] content = <span class="keyword">new</span> <span class="keyword">byte</span>[BYTE_SIZE];</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Subscriber subscriber;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">RequestBodyUpload</span><span class="params">(AbstractTransferInfomation infomation, ByteBuffer byteBuffer, Subscriber subscriber)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.infomation = infomation;</span><br><span class="line">        <span class="keyword">this</span>.byteBuffer = byteBuffer;</span><br><span class="line">        <span class="keyword">this</span>.subscriber = subscriber;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> MediaType <span class="title">contentType</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> MediaType.parse(<span class="string">"multipart/form-data"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">long</span> <span class="title">contentLength</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> infomation.getFileSize();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">writeTo</span><span class="params">(<span class="keyword">final</span> BufferedSink sink)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">        infomation.setCreateTime(System.currentTimeMillis());</span><br><span class="line">        sink.writeAll(</span><br><span class="line">                <span class="keyword">new</span> Source() &#123;</span><br><span class="line">                    <span class="meta">@Override</span></span><br><span class="line">                    <span class="function"><span class="keyword">public</span> <span class="keyword">long</span> <span class="title">read</span><span class="params">(Buffer sink, <span class="keyword">long</span> byteCount)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">                        <span class="keyword">if</span> (byteCount &lt; <span class="number">0</span>)</span><br><span class="line">                            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"byteCount &lt; 0: "</span> + byteCount);</span><br><span class="line">                        <span class="keyword">if</span> (byteCount == <span class="number">0</span>)</span><br><span class="line">                            <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">                        <span class="keyword">if</span> (byteBuffer == <span class="keyword">null</span>) &#123;</span><br><span class="line">                            <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">                        &#125;</span><br><span class="line">                        <span class="keyword">long</span> size = -<span class="number">1</span>;</span><br><span class="line">                        <span class="keyword">long</span> position = infomation.getPosition();</span><br><span class="line">                        <span class="keyword">long</span> fileSize = infomation.getFileSize();</span><br><span class="line">                        _log.i(<span class="string">"Read start byteCount=%d, position=%d, fileSize=%d"</span>, byteCount, position, fileSize);</span><br><span class="line">                        <span class="keyword">if</span> (position &lt; fileSize) &#123;</span><br><span class="line">                            size = Math.min(fileSize - position, BYTE_SIZE);</span><br><span class="line">                            byteBuffer.get(content, <span class="number">0</span>, (<span class="keyword">int</span>) size);</span><br><span class="line">                            sink.write(content, <span class="number">0</span>, (<span class="keyword">int</span>) size);</span><br><span class="line">                            position += size;</span><br><span class="line">                            byteCount += size;</span><br><span class="line">                            infomation.setPosition(position);</span><br><span class="line">                        &#125;</span><br><span class="line">                        subscriber.onNext(infomation);</span><br><span class="line">                        _log.i(<span class="string">"Read end byteCount %d"</span>, byteCount);</span><br><span class="line">                        <span class="keyword">return</span> size;</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    <span class="meta">@Override</span></span><br><span class="line">                    <span class="function"><span class="keyword">public</span> Timeout <span class="title">timeout</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                        <span class="keyword">return</span> <span class="keyword">new</span> Timeout();</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    <span class="meta">@Override</span></span><br><span class="line">                    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">close</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<hr>
+<h2 id="OKHTTP-3-7-0-类功能综述"><a href="#OKHTTP-3-7-0-类功能综述" class="headerlink" title="OKHTTP 3.7.0 类功能综述"></a>OKHTTP 3.7.0 类功能综述</h2><p>我将对OKHTTP-3.7.0框间中的所有对外提供的类做一些说明，我将它们分为四部分来描述：</p>
+<ul>
+<li>对HTTP协议的封装<br>协议层主要实现了HTTP协议参数和功能的封装，讲解这部分类的同时会简单引入部分<a href="#http_rfc">HTTP协议 [1]</a>的说明，首先我们先对协议层部分对外开放类进行说明，更多内部实现我们在内部讲解中介绍。</li>
+<li>资源调度工具<br>资源调度工具主要实现了对线程/网络连接/缓存等系统资源的管理，这一部分中线程管理和网络连接复用部分将重点说明</li>
+<li>网络层<br>网络层部分通过JavaSocket实现了HTTP底层数据包的发送和接收，同时支持自定义的Socket相关参数，地址和代理等。这部分我们仅在讲述逻辑时介绍功能，不单独做分析。</li>
+<li>业务流程封装（Call，interceptor）<br>业务流程相关类是OKHTTP的功能核心，是OKHTTP独有的调度逻辑，也是为什么OKHTTP比别的框间快的主要原因，这里我会详细介绍每个类的职责和他们的使用方法</li>
+</ul>
+<p>以下是层级关系图<br><img src="/images/OKHTTP层级关系图.png" alt=" "></p>
+<h3 id="协议层类分析"><a href="#协议层类分析" class="headerlink" title="协议层类分析"></a>协议层类分析</h3><h4 id="Request"><a href="#Request" class="headerlink" title="Request"></a>Request</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * An HTTP request. Instances of this class are immutable if their &#123;<span class="doctag">@link</span> #body&#125; is null or itself</span></span><br><span class="line"><span class="comment"> * immutable.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Request</span> </span>&#123;</span><br><span class="line">  <span class="keyword">final</span> HttpUrl url;</span><br><span class="line">  <span class="keyword">final</span> String method;</span><br><span class="line">  <span class="keyword">final</span> Headers headers;</span><br><span class="line">  <span class="keyword">final</span> RequestBody body;</span><br><span class="line">  <span class="keyword">final</span> Object tag;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">volatile</span> CacheControl cacheControl; <span class="comment">// Lazily initialized.</span></span><br></pre></td></tr></table></figure>
+<p>HTTP请求的抽象，其中包含了：</p>
+<ul>
+<li>url URL的解析类，代表了请求体中的URL部分 - <a href="#HttpUrl">HttpUrl</a></li>
+<li>method 请求类型的解析（GET,POST等）</li>
+<li>headers HEADER部分的封装 - <a href="#header">Headers [2]</a></li>
+<li>body 请求Body部分的封装和body相关header（长度等） - <a href="#request_response4">RequestBody [3.4]</a></li>
+<li>tag 请求的TAG，支持设置请求的TAG，请求发出后，可以通过拦截器获取Chain，从而获取Request，这时可以通过TAG标识分辨Rquest，或者传递信息</li>
+</ul>
+<h4 id="HttpUrl"><a href="#HttpUrl" class="headerlink" title="HttpUrl"></a><span id="HttpUrl">HttpUrl</span></h4><p>请求体中<a href="#request_response">URL部分 [3]</a>的抽象，包括了以下部分：</p>
+<ul>
+<li>scheme（即http/https）</li>
+<li>username/password （有些HTTP协议支持的用户名密码）</li>
+<li>host 即域名，也可能直接是IP地址</li>
+<li>port 端口</li>
+</ul>
+<h4 id="Response"><a href="#Response" class="headerlink" title="Response"></a>Response</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * An HTTP response. Instances of this class are not immutable: the response body is a one-shot</span></span><br><span class="line"><span class="comment"> * value that may be consumed only once and then closed. All other properties are immutable.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * &lt;p&gt;This class implements &#123;<span class="doctag">@link</span> Closeable&#125;. Closing it simply closes its response body. See</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@link</span> ResponseBody&#125; for an explanation and examples.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Response</span> <span class="keyword">implements</span> <span class="title">Closeable</span> </span>&#123;</span><br><span class="line">  <span class="keyword">final</span> Request request;</span><br><span class="line">  <span class="keyword">final</span> Protocol protocol;</span><br><span class="line">  <span class="keyword">final</span> <span class="keyword">int</span> code;</span><br><span class="line">  <span class="keyword">final</span> String message;</span><br><span class="line">  <span class="keyword">final</span> Handshake handshake;</span><br><span class="line">  <span class="keyword">final</span> Headers headers;</span><br><span class="line">  <span class="keyword">final</span> ResponseBody body;</span><br><span class="line">  <span class="keyword">final</span> Response networkResponse;</span><br><span class="line">  <span class="keyword">final</span> Response cacheResponse;</span><br><span class="line">  <span class="keyword">final</span> Response priorResponse;</span><br><span class="line">  <span class="keyword">final</span> <span class="keyword">long</span> sentRequestAtMillis;</span><br><span class="line">  <span class="keyword">final</span> <span class="keyword">long</span> receivedResponseAtMillis;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">volatile</span> CacheControl cacheControl; <span class="comment">// Lazily initialized.</span></span><br></pre></td></tr></table></figure>
+<p>HTTP响应体的抽象，其中包含了：</p>
+<ul>
+<li>protocol Protocol <a href="#request_response3">HTTP版本 [3]</a></li>
+<li>code <a href="#request_response1">HTTP返回码 [3.1]</a><br>  例如一个成功的响应体会返回200 OK 200为code OK 为message</li>
+<li>message 服务器返回的code码对应的信息</li>
+<li>handshake 保存了TCP连接时三次握手协议的信息</li>
+<li>headers 保存了响应头的信息</li>
+<li>body 保存了响应体信息，其中也包括Header中的跟Body有关的信息，例如ContentLength。</li>
+<li>networkResponse/cacheResponse/priorResponse </li>
+<li>sentRequestAtMillis 保存发送请求的真实时间，这个时间表示客户端第一次发送数据的时间。这个时间不包括客户端Connect的时间。</li>
+<li>receivedResponseAtMillis 开始接受请求的时间，此时Response的Header已经返回，body还没有接收。</li>
+<li>cacheControl 缓存相关，暂时忽略。</li>
+</ul>
+<h4 id="OkHttpClient"><a href="#OkHttpClient" class="headerlink" title="OkHttpClient"></a>OkHttpClient</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Factory for &#123;<span class="doctag">@linkplain</span> Call calls&#125;, which can be used to send HTTP requests and read their</span></span><br><span class="line"><span class="comment"> * responses.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">OkHttpClient</span> <span class="keyword">implements</span> <span class="title">Cloneable</span>, <span class="title">Call</span>.<span class="title">Factory</span>, <span class="title">WebSocket</span>.<span class="title">Factory</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">final</span> Dispatcher dispatcher;</span><br><span class="line">  <span class="keyword">final</span> Proxy proxy;</span><br><span class="line">  <span class="keyword">final</span> List&lt;Protocol&gt; protocols;</span><br><span class="line">  <span class="keyword">final</span> List&lt;ConnectionSpec&gt; connectionSpecs;</span><br><span class="line">  <span class="keyword">final</span> List&lt;Interceptor&gt; interceptors;</span><br><span class="line">  <span class="keyword">final</span> List&lt;Interceptor&gt; networkInterceptors;</span><br><span class="line">  <span class="keyword">final</span> ProxySelector proxySelector;</span><br><span class="line">  <span class="keyword">final</span> CookieJar cookieJar;</span><br><span class="line">  <span class="keyword">final</span> Cache cache;</span><br><span class="line">  <span class="keyword">final</span> InternalCache internalCache;</span><br><span class="line">  <span class="keyword">final</span> SocketFactory socketFactory;</span><br><span class="line">  <span class="keyword">final</span> SSLSocketFactory sslSocketFactory;</span><br><span class="line">  <span class="keyword">final</span> CertificateChainCleaner certificateChainCleaner;</span><br><span class="line">  <span class="keyword">final</span> HostnameVerifier hostnameVerifier;</span><br><span class="line">  <span class="keyword">final</span> CertificatePinner certificatePinner;</span><br><span class="line">  <span class="keyword">final</span> Authenticator proxyAuthenticator;</span><br><span class="line">  <span class="keyword">final</span> Authenticator authenticator;</span><br><span class="line">  <span class="keyword">final</span> ConnectionPool connectionPool;</span><br><span class="line">  <span class="keyword">final</span> Dns dns;</span><br><span class="line">  <span class="keyword">final</span> <span class="keyword">boolean</span> followSslRedirects;</span><br><span class="line">  <span class="keyword">final</span> <span class="keyword">boolean</span> followRedirects;</span><br><span class="line">  <span class="keyword">final</span> <span class="keyword">boolean</span> retryOnConnectionFailure;</span><br><span class="line">  <span class="keyword">final</span> <span class="keyword">int</span> connectTimeout;</span><br><span class="line">  <span class="keyword">final</span> <span class="keyword">int</span> readTimeout;</span><br><span class="line">  <span class="keyword">final</span> <span class="keyword">int</span> writeTimeout;</span><br><span class="line">  <span class="keyword">final</span> <span class="keyword">int</span> pingInterval;</span><br></pre></td></tr></table></figure>
+<p>OkHttpClient是请求的核心接口，对于OkHttpClient上的文档说明比较多，我只Copy了最主要的一段话，OkHttpClient是Call的Factory，它主要用来创建一个请求的抽象，管理了一个请求所需的所有参数，它通过Build模式来创建，可以配置的参数如下：</p>
+<ul>
+<li>dispatcher 主要负责请求的调度，处理了请求过程中线程的管理和分配，Dispatcher记录了所有等待或执行中的Call（不论阻塞或者非阻塞调用后都保存在这个类中），具体逻辑在下面单独介绍</li>
+<li>proxy 封装了网络层代理，是JavaSocket的API，具体使用请看JavaSocket编程的代理部分</li>
+<li>protocols 设置支持哪些<a href="#request_response3">HTTP协议（1.0/1.1/2.0等）[3.3]</a></li>
+<li>connectionSpecs 设置支持哪些<a href="#http_rfc4">HTTPS安全配置 [1.4]</a></li>
+<li>interceptors 无网络状态时的拦截器，注册在这里的拦截器会在网络链接前和响应体返回后回调</li>
+<li>networkInterceptors 有网络状态时的拦截器，注册在这里的拦截器会在网络链接后发送数据前回调，并且chain在接受数据完成，断开前返回</li>
+<li>proxySelector JavaSocket相关接口，主要处理代理的选择，不多做叙述</li>
+<li>cookieJar 负责管理cookie相关功能</li>
+<li>cache 缓存相关逻辑</li>
+<li>internalCache 缓存适配器，可以通过这个接口自定义缓存的存取</li>
+<li>socketFactory JavaSocket工厂，可以通过这个工厂自定义底层的socket连接</li>
+<li>sslSocketFactory HTTPS用的</li>
+<li>hostnameVerifier 这个用于验证HTTPS证书是否有效</li>
+<li>certificatePinner HTTPS加密相关类</li>
+<li>proxyAuthenticator/authenticator 服务器配置需要使用用户名密码时，这个类用来处理<a href="#http_rfc5">认证流程 [1.5]</a></li>
+<li>connectionPool OKHTTP连接池，负责管理Socket连接，实现了连接的存储和复用</li>
+<li>dns 提供了可以自定义处理DNS的接口，如果没有设置默认用JAVA的</li>
+<li>followRedirects 是否允许任何形式的重定向</li>
+<li>followSslRedirects 是否允许在HTTPS和HTTP之间重定向</li>
+<li>retryOnConnectionFailure 当连接发生错误时是否允许重试</li>
+<li>connectTimeout/readTimeout/writeTimeout 超时时间</li>
+<li>pingInterval websocket心跳包间隔</li>
+</ul>
+<p>以上为协议层对对外开放的全部可配置参数，OkHttp对HTTP协议的内部实现分别在 </p>
+<ul>
+<li>okhttp3.internal.http<br>主要包含了HTTP协议各个部分参数的基础类，和HTTP各个版本中基础的部分</li>
+<li>okhttp3.internal.http1<br>HTTP 1.0/1.1请求的打包和解包，主要类Http1Codec</li>
+<li>okhttp3.internal.http2<br>HTTP 2.0 请求的打包和解包和对HTTP2一些特性的实现，主要类Http2Codec</li>
+<li>okhttp3.internal.ws<br>包含了websocket的<a href="#websocket1">实现</a></li>
+</ul>
+<h3 id="HTTP协议相关文章"><a href="#HTTP协议相关文章" class="headerlink" title="HTTP协议相关文章"></a>HTTP协议相关文章</h3><h4 id="1-HTTP协议相关文章"><a href="#1-HTTP协议相关文章" class="headerlink" title="1. HTTP协议相关文章"></a><span id="http_rfc">1. HTTP协议相关文章</span></h4><ul>
+<li><span id="http_rfc1">[1.1]</span> <a href="http://www.tuicool.com/articles/jMFfIv" target="_blank" rel="noopener">简介帮助理解</a></li>
+<li><span id="http_rfc2">[1.2]</span> <a href="http://www.cnblogs.com/li0803/archive/2008/11/03/1324746.html" target="_blank" rel="noopener">HTTP协议全解析</a></li>
+<li><span id="http_rfc3">[1.3]</span> <a href="https://www.w3.org/Protocols/rfc2616/rfc2616.html" target="_blank" rel="noopener">官方协议全解析</a></li>
+<li><span id="http_rfc4">[1.4]</span><a href="http://www.tuicool.com/articles/3YNrmin" target="_blank" rel="noopener">OKHTTP中HTTPS协议控制</a></li>
+<li><span id="http_rfc5">[1.5]</span><a href="http://blog.csdn.net/wwwsq/article/details/7255062" target="_blank" rel="noopener">Authorization认证过程</a></li>
+<li><span id="http_rfc6">[1.6]</span><a href="http://www.blogjava.net/yongboy/archive/2015/03/19/423611.aspx" target="_blank" rel="noopener">HTTP2多路复用</a></li>
+</ul>
+<h4 id="2-HEADER相关文章"><a href="#2-HEADER相关文章" class="headerlink" title="2. HEADER相关文章"></a><span id="header">2. HEADER相关文章</span></h4><ul>
+<li><span id="header1">[2.1]</span> <a href="http://kb.cnblogs.com/page/92320/" target="_blank" rel="noopener">HEADER头说明列表</a></li>
+<li><span id="header2">[2.2]</span> <a href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html" target="_blank" rel="noopener">官方rfc</a></li>
+</ul>
+<h4 id="3-REQUEST-和-RESPONSE"><a href="#3-REQUEST-和-RESPONSE" class="headerlink" title="3. REQUEST 和 RESPONSE"></a><span id="request_response">3. REQUEST 和 RESPONSE</span></h4><ul>
+<li><span id="request_response1">[3.1]</span> <a href="http://baike.baidu.com/link?url=ye0PXBjc_t0B4e-DvKSsx3oBdSB_SNszXcOXQKQTaqwD0NEv0e9rmBxGWyvbvyHyumkRJiwDe9mP8UGrqwBqWJK43Y3fmbWKaBhyrnXPAXIVP0hgZulzUp6KCa6Pyllb" target="_blank" rel="noopener">HTTP响应码百度百科</a></li>
+<li><span id="request_response2">[3.2]</span> <a href="http://www.cnblogs.com/yin-jingyu/archive/2011/08/01/2123548.html" target="_blank" rel="noopener">HTTP请求类型</a></li>
+<li><span id="request_response3">[3.3]</span> <a href="http://blog.csdn.net/linsongbin1/article/details/54980801" target="_blank" rel="noopener">HTTP 1.0/1.1/2.0 主要区别</a></li>
+<li><span id="request_response4">[3.4]</span> <a href="http://www.jianshu.com/p/e47abb91465d" target="_blank" rel="noopener">Http POST 提交数据的四种方式解析</a></li>
+</ul>
+<h4 id="4-WEBSOCKET相关"><a href="#4-WEBSOCKET相关" class="headerlink" title="4. WEBSOCKET相关"></a><span id="websocket">4. WEBSOCKET相关</span></h4><ul>
+<li><span id="websocket1">[4.1]</span> <a href="http://baike.baidu.com/link?url=x28Z2QZUU7xc7SnW5v_0ij4pBUZBk3jQXCBOPLZy-zeEFp4hnphBeQuFl6MWt4Ehp7UvAAAcm-jB9zzF-kEhRjPZpuMV3CtrLQgcUUsVn2W" target="_blank" rel="noopener">百度百科websocket</a></li>
+</ul>
+<h3 id="调度层工具"><a href="#调度层工具" class="headerlink" title="调度层工具"></a>调度层工具</h3><p>调度层工具我们仅介绍线程管理和连接池两个类，</p>
+<h4 id="Dispatcher"><a href="#Dispatcher" class="headerlink" title="Dispatcher"></a>Dispatcher</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Policy on when async requests are executed.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * &lt;p&gt;Each dispatcher uses an &#123;<span class="doctag">@link</span> ExecutorService&#125; to run calls internally. If you supply your</span></span><br><span class="line"><span class="comment"> * own executor, it should be able to run &#123;<span class="doctag">@linkplain</span> #getMaxRequests the configured maximum&#125; number</span></span><br><span class="line"><span class="comment"> * of calls concurrently.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Dispatcher</span> </span>&#123;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">int</span> maxRequests = <span class="number">64</span>;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">int</span> maxRequestsPerHost = <span class="number">5</span>;</span><br><span class="line">  <span class="keyword">private</span> Runnable idleCallback;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/** Executes calls. Created lazily. */</span></span><br><span class="line">  <span class="keyword">private</span> ExecutorService executorService;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/** Ready async calls in the order they'll be run. */</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> Deque&lt;AsyncCall&gt; readyAsyncCalls = <span class="keyword">new</span> ArrayDeque&lt;&gt;();</span><br><span class="line"></span><br><span class="line">  <span class="comment">/** Running asynchronous calls. Includes canceled calls that haven't finished yet. */</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> Deque&lt;AsyncCall&gt; runningAsyncCalls = <span class="keyword">new</span> ArrayDeque&lt;&gt;();</span><br><span class="line"></span><br><span class="line">  <span class="comment">/** Running synchronous calls. Includes canceled calls that haven't finished yet. */</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> Deque&lt;RealCall&gt; runningSyncCalls = <span class="keyword">new</span> ArrayDeque&lt;&gt;();</span><br></pre></td></tr></table></figure>
+<p>Dispatcher类负责线程资源的分配和回收，它根据域名和可自定义的线程池控制线程的分配。</p>
+<ul>
+<li>maxRequests 最大可分配线程数</li>
+<li>maxRequestsPerHost 单个域名最大可分配线程数</li>
+<li>idleCallback 一个可设置的任务，当没有任何一个任务在执行时，调用此回调</li>
+<li>executorService自定义线程池</li>
+<li>readyAsyncCalls 等待中的异步任务队列</li>
+<li>runningAsyncCalls 正在运行中的异步任务队列</li>
+<li>runningSyncCalls 正在运行中的同步任务队列</li>
+</ul>
+<p>以下是分配和回收的流程图<br><img src="/images/Dispatcher流程图.png" alt=" "></p>
+<p>当用户发起一个异步请求时，OkHttp通过调用synchronized void enqueue(AsyncCall call)函数请求线程，enqueue判断当前使用线程数是否小于maxRequests，并且通过int runningCallsForHost(AsyncCall call) 函数判断当前请求的域名是否超出域名限制。之后加入请求队列或者加入等待队列。</p>
+<p>当一个请求（同步或异步）完成时，OkHttp逻辑层调用finished释放资源，finished函数会remove对应队列的任务，然后整理队列，将等待中的下一个队列入队。</p>
+<h4 id="ConnectionPool"><a href="#ConnectionPool" class="headerlink" title="ConnectionPool"></a>ConnectionPool</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Manages reuse of HTTP and HTTP/2 connections for reduced network latency. HTTP requests that</span></span><br><span class="line"><span class="comment"> * share the same &#123;<span class="doctag">@link</span> Address&#125; may share a &#123;<span class="doctag">@link</span> Connection&#125;. This class implements the policy</span></span><br><span class="line"><span class="comment"> * of which connections to keep open for future use.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">ConnectionPool</span> </span>&#123;</span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Background threads are used to cleanup expired connections. There will be at most a single</span></span><br><span class="line"><span class="comment">   * thread running per connection pool. The thread pool executor permits the pool itself to be</span></span><br><span class="line"><span class="comment">   * garbage collected.</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Executor executor = <span class="keyword">new</span> ThreadPoolExecutor(<span class="number">0</span> <span class="comment">/* corePoolSize */</span>,</span><br><span class="line">      Integer.MAX_VALUE <span class="comment">/* maximumPoolSize */</span>, <span class="number">60L</span> <span class="comment">/* keepAliveTime */</span>, TimeUnit.SECONDS,</span><br><span class="line">      <span class="keyword">new</span> SynchronousQueue&lt;Runnable&gt;(), Util.threadFactory(<span class="string">"OkHttp ConnectionPool"</span>, <span class="keyword">true</span>));</span><br><span class="line"></span><br><span class="line">  <span class="comment">/** The maximum number of idle connections for each address. */</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> maxIdleConnections;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">long</span> keepAliveDurationNs;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> Runnable cleanupRunnable = <span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">    <span class="meta">@Override</span> <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">      <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        <span class="keyword">long</span> waitNanos = cleanup(System.nanoTime());</span><br><span class="line">        <span class="keyword">if</span> (waitNanos == -<span class="number">1</span>) <span class="keyword">return</span>;</span><br><span class="line">        <span class="keyword">if</span> (waitNanos &gt; <span class="number">0</span>) &#123;</span><br><span class="line">          <span class="keyword">long</span> waitMillis = waitNanos / <span class="number">1000000L</span>;</span><br><span class="line">          waitNanos -= (waitMillis * <span class="number">1000000L</span>);</span><br><span class="line">          <span class="keyword">synchronized</span> (ConnectionPool.<span class="keyword">this</span>) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">              ConnectionPool.<span class="keyword">this</span>.wait(waitMillis, (<span class="keyword">int</span>) waitNanos);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException ignored) &#123;</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> Deque&lt;RealConnection&gt; connections = <span class="keyword">new</span> ArrayDeque&lt;&gt;();</span><br><span class="line">  <span class="keyword">final</span> RouteDatabase routeDatabase = <span class="keyword">new</span> RouteDatabase();</span><br><span class="line">  <span class="keyword">boolean</span> cleanupRunning;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>maxIdleConnections 最大保持连接数，这个数主要用于清理，实际的线程队列长度可能超过这个数。没当请求重新打开一个连接时，这个连接就会被加入队列。</li>
+<li>keepAliveDurationNs 连接最大保持时间</li>
+<li>cleanupRunnable 连接队列清理任务</li>
+<li>connections 连接保持队列</li>
+<li>routeDatabase 路由点存储，这个跟连接池没关系，主要是为了让所有连接都复用这一组路由数据</li>
+<li>cleanupRunning 清理线程是否在运行</li>
+</ul>
+<p>ConnectionPool类负责控制Socket连接的复用，要了解整个流程首先要说明一下OkHttp对socket链接的封装Connection接口和其实现RealConnection：</p>
+<blockquote>
+<p>根据HTTP2和websocket的协议，一个Socket连接可以承载多个流(<a href="#http_rfc6">多路复用[1.6]</a>)。所以在OkHttp的实现中，用Connection代表一个Socket连接，用StreamAllocation代表连接内部的数据流。一个Connection中可以存在多个StreamAllocation。而ConnectionPool负责保存Connection和判断一个新的StreamAllocation能否添加到当期已有的Connection中。</p>
+</blockquote>
+<p>我们通过流程图和源码来说明这个过程：</p>
+<blockquote>
+<p>在这里我们仅关注ConnectionPool中的逻辑，其中有一些涉及Connection的函数我们仅做功能描述。</p>
+</blockquote>
+<p>我们首先看一下几个主要函数<br><strong>获取一个连接:</strong><br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Returns a recycled connection to &#123;<span class="doctag">@code</span> address&#125;, or null if no such connection exists. The</span></span><br><span class="line"><span class="comment"> * route is null if the address has not yet been routed.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function">RealConnection <span class="title">get</span><span class="params">(Address address, StreamAllocation streamAllocation, Route route)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">assert</span> (Thread.holdsLock(<span class="keyword">this</span>));</span><br><span class="line">  <span class="keyword">for</span> (RealConnection connection : connections) &#123;</span><br><span class="line">    <span class="keyword">if</span> (connection.isEligible(address, route)) &#123;</span><br><span class="line">      streamAllocation.acquire(connection);</span><br><span class="line">      <span class="keyword">return</span> connection;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>我们可以通过当前请求生成的地址信息(<a href="#[2]">Address/Route [2]</a>)获取一个连接，Connection通过isEligible函数判断当前连接是否可以继续添加一个流，如果可以添加，就将streamAllocation和Connection绑定，此时请求才真正的连接到服务器。</p>
+<p><strong>合并连接</strong><br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Replaces the connection held by &#123;<span class="doctag">@code</span> streamAllocation&#125; with a shared connection if possible.</span></span><br><span class="line"><span class="comment">   * This recovers when multiple multiplexed connections are created concurrently.</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function">Socket <span class="title">deduplicate</span><span class="params">(Address address, StreamAllocation streamAllocation)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">assert</span> (Thread.holdsLock(<span class="keyword">this</span>));</span><br><span class="line">    <span class="keyword">for</span> (RealConnection connection : connections) &#123;</span><br><span class="line">      <span class="keyword">if</span> (connection.isEligible(address, <span class="keyword">null</span>)</span><br><span class="line">          &amp;&amp; connection.isMultiplexed()</span><br><span class="line">          &amp;&amp; connection != streamAllocation.connection()) &#123;</span><br><span class="line">        <span class="keyword">return</span> streamAllocation.releaseAndAcquire(connection);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<p>这个函数主要用于清理重复的连接。在HTTP2协议中，一个连接可以承载多个请求，当多个请求同时发起时，因为多线程同步问题，可能都没有查询到有可用的连接，此时会创建多个连接。所以当连接创建完并且添加到连接池后，针对当前请求，会再次在连接池在连接池中搜索一次，如果有相同的连接，则释放掉当前连接，将请求接入到已有的连接中。</p>
+<p><strong>清理连接</strong><br>我们再来看一下连接队列的清理流程：<br><img src="/images/OkHttp连接池清理流程.png" alt=" "></p>
+<p>一共有两个地方可以触发清理逻辑：</p>
+<ul>
+<li>添加一个新的连接到连接保持队列</li>
+<li>某个连接中所有流都结束时，会主动调用连接池中的connectionBecameIdle函数</li>
+</ul>
+<p>当触发清理逻辑后，队列将逐渐恢复到允许的大小，并且清理超时的连接。</p>
+<hr>
+<p>以上便是OkHttp对外开放接口和非协议相关功能逻辑的主要接口，在下一章，我们将深入OkHttp内部来分析OkHttp的原理和框间结构。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><span id="[1]">[1]</span> <a href="https://github.com/square/okhttp/wiki" target="_blank" rel="noopener">OkHttp官方文档</a></li>
+<li><span id="[2]">[2]</span> <a href="http://www.jianshu.com/p/2b44343a9bca" target="_blank" rel="noopener">一个比较好的翻译</a></li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/OkHttp/" rel="tag"># OkHttp</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/07/31/OkHttp3-源码分析-version-3-7-0-第二章：工作流程分析/" rel="prev" title="OkHttp3 源码分析(version: 3.7.0) - 第二章：工作流程分析">
+                OkHttp3 源码分析(version: 3.7.0) - 第二章：工作流程分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="G33kC4t" />
+          <p class="site-author-name" itemprop="name">G33kC4t</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="Link" target="_blank" title="LinkLabel">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  LinkLabel
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/G33kC4t" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-block">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              Links
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://example.com/" title="Title" target="_blank">Title</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#基本请求"><span class="nav-number">1.</span> <span class="nav-text">基本请求</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#GET-请求实例"><span class="nav-number">1.1.</span> <span class="nav-text">GET 请求实例</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#综述"><span class="nav-number">1.1.1.</span> <span class="nav-text">综述</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Request部分"><span class="nav-number">1.1.2.</span> <span class="nav-text">Request部分</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#OkHttpClient部分"><span class="nav-number">1.1.3.</span> <span class="nav-text">OkHttpClient部分</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Call部分"><span class="nav-number">1.1.4.</span> <span class="nav-text">Call部分</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Response部分"><span class="nav-number">1.1.5.</span> <span class="nav-text">Response部分</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ResponseBody部分"><span class="nav-number">1.1.6.</span> <span class="nav-text">ResponseBody部分</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#POST-请求实例"><span class="nav-number">1.2.</span> <span class="nav-text">POST 请求实例</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#RequestBody部分"><span class="nav-number">1.2.1.</span> <span class="nav-text">RequestBody部分</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#OKHTTP-3-7-0-类功能综述"><span class="nav-number">2.</span> <span class="nav-text">OKHTTP 3.7.0 类功能综述</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#协议层类分析"><span class="nav-number">2.1.</span> <span class="nav-text">协议层类分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Request"><span class="nav-number">2.1.1.</span> <span class="nav-text">Request</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HttpUrl"><span class="nav-number">2.1.2.</span> <span class="nav-text">HttpUrl</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Response"><span class="nav-number">2.1.3.</span> <span class="nav-text">Response</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#OkHttpClient"><span class="nav-number">2.1.4.</span> <span class="nav-text">OkHttpClient</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HTTP协议相关文章"><span class="nav-number">2.2.</span> <span class="nav-text">HTTP协议相关文章</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-HTTP协议相关文章"><span class="nav-number">2.2.1.</span> <span class="nav-text">1. HTTP协议相关文章</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-HEADER相关文章"><span class="nav-number">2.2.2.</span> <span class="nav-text">2. HEADER相关文章</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-REQUEST-和-RESPONSE"><span class="nav-number">2.2.3.</span> <span class="nav-text">3. REQUEST 和 RESPONSE</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-WEBSOCKET相关"><span class="nav-number">2.2.4.</span> <span class="nav-text">4. WEBSOCKET相关</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#调度层工具"><span class="nav-number">2.3.</span> <span class="nav-text">调度层工具</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Dispatcher"><span class="nav-number">2.3.1.</span> <span class="nav-text">Dispatcher</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ConnectionPool"><span class="nav-number">2.3.2.</span> <span class="nav-text">ConnectionPool</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">3.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">G33kC4t</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+  <!-- 页面点击小红心 -->
+  <script type="text/javascript" src="/js/src/love.js"></script>
+  <!-- 背景动画 -->
+  <script type="text/javascript" src="/js/src/particle.js"></script>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+</html>
