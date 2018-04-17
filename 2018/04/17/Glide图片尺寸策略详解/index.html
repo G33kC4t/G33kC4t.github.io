@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.1" />
+
+
+
+
+
+
+<meta name="description" content="[TOC]  Glide中对于尺寸计算的策略Glide设置了一套逻辑来用根据不同情况对view的尺寸进行计算. 具体的流程我们在下面分析, 我们首先说明Glide默认设置下对于view的各种情况计算. 宽高固定值or宽高由override强制设置123456789101112&amp;lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&amp;gt;&amp;lt;FrameLayout xm">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Glide图片尺寸策略详解">
+<meta property="og:url" content="http://yoursite.com/2018/04/17/Glide图片尺寸策略详解/index.html">
+<meta property="og:site_name" content="Cat&#39;s 小窝">
+<meta property="og:description" content="[TOC]  Glide中对于尺寸计算的策略Glide设置了一套逻辑来用根据不同情况对view的尺寸进行计算. 具体的流程我们在下面分析, 我们首先说明Glide默认设置下对于view的各种情况计算. 宽高固定值or宽高由override强制设置123456789101112&amp;lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&amp;gt;&amp;lt;FrameLayout xm">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-04-17T07:52:48.372Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Glide图片尺寸策略详解">
+<meta name="twitter:description" content="[TOC]  Glide中对于尺寸计算的策略Glide设置了一套逻辑来用根据不同情况对view的尺寸进行计算. 具体的流程我们在下面分析, 我们首先说明Glide默认设置下对于view的各种情况计算. 宽高固定值or宽高由override强制设置123456789101112&amp;lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&amp;gt;&amp;lt;FrameLayout xm">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/04/17/Glide图片尺寸策略详解/"/>
+
+
+
+
+
+  <title>Glide图片尺寸策略详解 | Cat's 小窝</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Cat's 小窝</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/17/Glide图片尺寸策略详解/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="G33kC4t">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Cat's 小窝">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Glide图片尺寸策略详解</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-17T15:52:21+08:00">
+                2018-04-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>[TOC]</p>
+<hr>
+<h1 id="Glide中对于尺寸计算的策略"><a href="#Glide中对于尺寸计算的策略" class="headerlink" title="Glide中对于尺寸计算的策略"></a>Glide中对于尺寸计算的策略</h1><p>Glide设置了一套逻辑来用根据不同情况对view的尺寸进行计算. 具体的流程我们在下面分析, 我们首先说明Glide默认设置下对于view的各种情况计算.</p>
+<h2 id="宽高固定值or宽高由override强制设置"><a href="#宽高固定值or宽高由override强制设置" class="headerlink" title="宽高固定值or宽高由override强制设置"></a>宽高固定值or宽高由override强制设置</h2><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span><br><span class="line"><span class="tag">&lt;<span class="name">FrameLayout</span> <span class="attr">xmlns:android</span>=<span class="string">"http://schemas.android.com/apk/res/android"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:id</span>=<span class="string">"@+id/fl_test"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:layout_width</span>=<span class="string">"@dimen/gloable_width"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:layout_height</span>=<span class="string">"@dimen/gloable_height"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">ImageView</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:id</span>=<span class="string">"@+id/iv_test"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_width</span>=<span class="string">"@dimen/gloable_width"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_height</span>=<span class="string">"@dimen/gloable_height"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:scaleType</span>=<span class="string">"centerInside"</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">FrameLayout</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>这种情况下, 会直接用宽高获取图片, 最为简单和快速的一种. 不多做说明, 原理及通过LayoutParam的宽高和getWidth/Height函数获取, 并判断有效值.</p>
+<h2 id="宽-高-之一或全部-为match-parent-需要计算后才能得到-且父控件宽高也是可计算的-非warp-content"><a href="#宽-高-之一或全部-为match-parent-需要计算后才能得到-且父控件宽高也是可计算的-非warp-content" class="headerlink" title="宽/高(之一或全部)为match_parent(需要计算后才能得到), 且父控件宽高也是可计算的(非warp_content)"></a>宽/高(之一或全部)为match_parent(需要计算后才能得到), 且父控件宽高也是可计算的(非warp_content)</h2><p><strong>一句话概括: 当前无法获取的, 推迟到View测量完成后, 再获取</strong></p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span><br><span class="line"><span class="tag">&lt;<span class="name">FrameLayout</span> <span class="attr">xmlns:android</span>=<span class="string">"http://schemas.android.com/apk/res/android"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:id</span>=<span class="string">"@+id/fl_test"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:layout_width</span>=<span class="string">"match_parent"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:layout_height</span>=<span class="string">"match_parent"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">ImageView</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:id</span>=<span class="string">"@+id/iv_test"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_width</span>=<span class="string">"match_parent"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_height</span>=<span class="string">"match_parent"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:scaleType</span>=<span class="string">"centerInside"</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">FrameLayout</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>这种情况下, 会首先向View中的ViewTreeObserver注册OnPreDrawListener, 在onPreDraw, 也就是布局大小计算完成后, 在重新获取一次view宽高, 此时因为View的宽高为match_parent, 且父布局大小确定, 所以可以正确获取大小, 从而根据大小请求. </p>
+<h2 id="宽-高自适应-一个或者均设置为wrap-content"><a href="#宽-高自适应-一个或者均设置为wrap-content" class="headerlink" title="宽/高自适应(一个或者均设置为wrap_content)"></a>宽/高自适应(一个或者均设置为wrap_content)</h2><p><strong>一句话概括: 遇到wrap_content的情况, 分为两种情况:</strong></p>
+<ul>
+<li><strong>如果当前View明确表示其内容无法决定其高度, 那么获取View所在Window的高度.</strong></li>
+<li><strong>如果发现当前View的宽/高可以通过其内容计算出来, 那么等待测量完成, 再获取</strong></li>
+</ul>
+<p>情况一<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span><br><span class="line"><span class="tag">&lt;<span class="name">FrameLayout</span> <span class="attr">xmlns:android</span>=<span class="string">"http://schemas.android.com/apk/res/android"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:id</span>=<span class="string">"@+id/fl_test"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:layout_width</span>=<span class="string">"match_parent"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:layout_height</span>=<span class="string">"wrap_content"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">ImageView</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:id</span>=<span class="string">"@+id/iv_test"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_width</span>=<span class="string">"@dimen/gloable_width"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_height</span>=<span class="string">"wrap_content"</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">FrameLayout</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>情况二<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span><br><span class="line"><span class="tag">&lt;<span class="name">FrameLayout</span> <span class="attr">xmlns:android</span>=<span class="string">"http://schemas.android.com/apk/res/android"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:id</span>=<span class="string">"@+id/fl_test"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:layout_width</span>=<span class="string">"match_parent"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:layout_height</span>=<span class="string">"wrap_content"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">ImageView</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:id</span>=<span class="string">"@+id/iv_test"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_width</span>=<span class="string">"match_parent"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_height</span>=<span class="string">"wrap_content"</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">FrameLayout</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>情况三<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span><br><span class="line"><span class="tag">&lt;<span class="name">FrameLayout</span> <span class="attr">xmlns:android</span>=<span class="string">"http://schemas.android.com/apk/res/android"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:id</span>=<span class="string">"@+id/fl_test"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:layout_width</span>=<span class="string">"wrap_content"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:layout_height</span>=<span class="string">"wrap_content"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">ImageView</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:id</span>=<span class="string">"@+id/iv_test"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_width</span>=<span class="string">"wrap_content"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_height</span>=<span class="string">"wrap_content"</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">FrameLayout</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>在这种情况下, Glide首先会判断, 当前view的宽/高是否可以由其内容决定, 判断方法为:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">    * &lt;p&gt;Indicates whether or not this view's layout will be requested during</span></span><br><span class="line"><span class="comment">    * the next hierarchy layout pass.&lt;/p&gt;</span></span><br><span class="line"><span class="comment">    *</span></span><br><span class="line"><span class="comment">    * <span class="doctag">@return</span> true if the layout will be forced during next layout pass</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">view.isLayoutRequested()</span><br></pre></td></tr></table></figure>
+<p>如果宽/高由其内容决定,  那么同上面match_parent部分, 会设置监听 ,等View测量完成在获取实际高度<br>如果发现wrap_content部分无法确定大小, 那么将使用view所在window的大小, 这样是极易OOM的:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Use the maximum to avoid depending on the device's current orientation.</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">getMaxDisplayLength</span><span class="params">(Context context)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (maxDisplayLength == <span class="keyword">null</span>) &#123;</span><br><span class="line">    WindowManager windowManager =</span><br><span class="line">        (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);</span><br><span class="line">    Display display = windowManager.getDefaultDisplay();</span><br><span class="line">    Point displayDimensions = <span class="keyword">new</span> Point();</span><br><span class="line">    display.getSize(displayDimensions);</span><br><span class="line">    maxDisplayLength = Math.max(displayDimensions.x, displayDimensions.y);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> maxDisplayLength;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个有一些解决方法, 在下面的填坑部分会详细说明.</p>
+<h1 id="图片尺寸计算流程"><a href="#图片尺寸计算流程" class="headerlink" title="图片尺寸计算流程"></a>图片尺寸计算流程</h1><p>分析一下View的尺寸计算流程, 主要对ViewTarget.getSize流程进行分析: </p>
+<p>Glide主要通过注册监听View的测量事件, 在测量完成后绘制前的时间里根据测量结果, 来取得宽高, 从而解决在初始化阶段无法获取宽高问题, Glide还通过一些测量来保证了当我们设置wrap_content时得到尽量好的结果. 但是Glide在测量方面还有写功能不足, 或者一些我们如果不注意就会导致BUG的坑. 接下来我们看一下从源码角度发现的测量的坑.</p>
+<h1 id="测量策略中的坑"><a href="#测量策略中的坑" class="headerlink" title="测量策略中的坑"></a>测量策略中的坑</h1><h2 id="当设置wrap-content时内存消耗过大问题和抖动问题"><a href="#当设置wrap-content时内存消耗过大问题和抖动问题" class="headerlink" title="当设置wrap_content时内存消耗过大问题和抖动问题"></a>当设置wrap_content时内存消耗过大问题和抖动问题</h2><p>我们看到, 源码中如果设置wrap_content, 并且无法计算宽高时, Glide默认获取Window的宽高, 所以当我们在列表中加载图片时, 可能会加载多张原图, 这样会导致严重的oom.<br>同时, 如果我们设置了默认图和错误图和加载的图片尺寸不一样 还会导致图片的抖动</p>
+<p><strong>解决方法:</strong><br>因为Glide不支持获取自动获取MaxWidth, 所以我们要设置一个图去触发它. 如果我们想使用wrap_content自适应大小, 同时还需要有个界限, 我们可以设置MaxHeight/MaxWidth, 同时每次设置一张图填满最大值.<br>当然, 我们也可以通过自定义Target或直接计算好设置override来实现</p>
+<p><strong>换句换说: 如果宽高都是自适应的, 我们已经设置了一张图片(就是ImageView已经有了一个宽高), 再去加载图片, 此时加载出来的图片大小是根据当前宽高来加载的, 这避免了一部分抖动问题, 但是如果ImageView的宽高越来越小, 就恢复不回去了, 所以我建议每次都先恢复一个可行大小的图在加载(虽然会抖动~)</strong></p>
+<h2 id="当ImageView设置match-parent-但是父控件为wrap-content-时图片加载不出来问题"><a href="#当ImageView设置match-parent-但是父控件为wrap-content-时图片加载不出来问题" class="headerlink" title="当ImageView设置match_parent 但是父控件为wrap_content 时图片加载不出来问题"></a>当ImageView设置match_parent 但是父控件为wrap_content 时图片加载不出来问题</h2><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span><br><span class="line"><span class="tag">&lt;<span class="name">FrameLayout</span> <span class="attr">xmlns:android</span>=<span class="string">"http://schemas.android.com/apk/res/android"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:id</span>=<span class="string">"@+id/fl_test"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:layout_width</span>=<span class="string">"wrap_content"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">android:layout_height</span>=<span class="string">"wrap_content"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">ImageView</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:id</span>=<span class="string">"@+id/iv_test"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_width</span>=<span class="string">"match_parent"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:layout_height</span>=<span class="string">"match_parent"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:scaleType</span>=<span class="string">"centerInside"</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">FrameLayout</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>如上面的布局, 直接加载图片是加载不出来的, 需要先设置一个图给ImageView宽高. 因为Glide规定, 当View表示它的宽高可以由其内容测量出来时, Glide仅仅会从测量完成的那个监听处获取大小, 但是因为父布局大小无法计算, 而ImageView也没有设置一个可用大小的图, 所以每次获得都是0, 这样这个请求就永远不会触发加载, 所以和上面的问题一样, 设置wrap_content时, 最坏的情况下, 也要设置一个可行大小的默认图. </p>
+<h1 id="一些可以优化的点"><a href="#一些可以优化的点" class="headerlink" title="一些可以优化的点"></a>一些可以优化的点</h1><p>我用过一段时间Fresco和IML, 综合各家优点, 我发现几个可以通过自定义支持, 但是Glide现在还没有的功能. </p>
+<h2 id="不能设置按比例加载"><a href="#不能设置按比例加载" class="headerlink" title="不能设置按比例加载"></a>不能设置按比例加载</h2><p>设置一个比例, 当宽/高有一个可以确定时, 另一部分按照比例加载.</p>
+<p><strong>实现方法:</strong></p>
+<p>写一个自定义的Target</p>
+<h2 id="支持美图云"><a href="#支持美图云" class="headerlink" title="支持美图云"></a>支持美图云</h2><p>我们可以通过自定义ModuleLoader的方法, 在下载前修改url, 加上美图云的压缩后缀, 因为Glide缓存机制是跟宽高相关的, 所以即使传进来的URL相同, 宽高不同, 命中的缓存也不一样. 原图的DiskCache可以通过加签名的方式来命中缓存.</p>
+<p><strong>实现方法:</strong><br>写一个自定义的ModuleLoader</p>
+<h2 id="缓存本地化"><a href="#缓存本地化" class="headerlink" title="缓存本地化"></a>缓存本地化</h2><p>类似Fresco, 使用NATIVE内存来存储Bitmap. 这需要重定义一整条加载链, 但是也是可实现的.</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/04/17/Glide源码分析-version-4-2-0/" rel="next" title="Glide源码分析(version: 4.2.0)">
+                <i class="fa fa-chevron-left"></i> Glide源码分析(version: 4.2.0)
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="G33kC4t" />
+          <p class="site-author-name" itemprop="name">G33kC4t</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="Link" target="_blank" title="LinkLabel">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  LinkLabel
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/G33kC4t" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-block">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              Links
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://example.com/" title="Title" target="_blank">Title</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Glide中对于尺寸计算的策略"><span class="nav-number">1.</span> <span class="nav-text">Glide中对于尺寸计算的策略</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#宽高固定值or宽高由override强制设置"><span class="nav-number">1.1.</span> <span class="nav-text">宽高固定值or宽高由override强制设置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#宽-高-之一或全部-为match-parent-需要计算后才能得到-且父控件宽高也是可计算的-非warp-content"><span class="nav-number">1.2.</span> <span class="nav-text">宽/高(之一或全部)为match_parent(需要计算后才能得到), 且父控件宽高也是可计算的(非warp_content)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#宽-高自适应-一个或者均设置为wrap-content"><span class="nav-number">1.3.</span> <span class="nav-text">宽/高自适应(一个或者均设置为wrap_content)</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#图片尺寸计算流程"><span class="nav-number">2.</span> <span class="nav-text">图片尺寸计算流程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#测量策略中的坑"><span class="nav-number">3.</span> <span class="nav-text">测量策略中的坑</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#当设置wrap-content时内存消耗过大问题和抖动问题"><span class="nav-number">3.1.</span> <span class="nav-text">当设置wrap_content时内存消耗过大问题和抖动问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#当ImageView设置match-parent-但是父控件为wrap-content-时图片加载不出来问题"><span class="nav-number">3.2.</span> <span class="nav-text">当ImageView设置match_parent 但是父控件为wrap_content 时图片加载不出来问题</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#一些可以优化的点"><span class="nav-number">4.</span> <span class="nav-text">一些可以优化的点</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#不能设置按比例加载"><span class="nav-number">4.1.</span> <span class="nav-text">不能设置按比例加载</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#支持美图云"><span class="nav-number">4.2.</span> <span class="nav-text">支持美图云</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#缓存本地化"><span class="nav-number">4.3.</span> <span class="nav-text">缓存本地化</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">G33kC4t</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+  <!-- 页面点击小红心 -->
+  <script type="text/javascript" src="/js/src/love.js"></script>
+  <!-- 背景动画 -->
+  <script type="text/javascript" src="/js/src/particle.js"></script>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+</html>
